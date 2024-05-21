@@ -2,6 +2,8 @@ const express = require("express");
 
 const app = express();
 
+const userRoute = require("./src/routes/user");
+
 app.use(express.json());
 
 app.get("/", (req, res) => {
@@ -9,5 +11,7 @@ app.get("/", (req, res) => {
     message: "Runing",
   });
 });
+
+app.use("/user", userRoute);
 
 module.exports = app;
