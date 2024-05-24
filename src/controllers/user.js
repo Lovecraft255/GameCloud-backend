@@ -1,5 +1,5 @@
 const { where } = require("sequelize");
-let User = require("../models/User");
+const User = require("../models/User");
 
 async function createUser(req, res) {
   const { name, rol } = req.body;
@@ -20,9 +20,20 @@ async function getUser(req, res) {
   const { id } = req.params;
   const user = await User.findOne({ where: { id: id } });
 
-  if (user == null) {
-    console.log("Usuario no encontrado");
-  } //throw new Error("Usuario no encontrado");
+  if (user == null) throw new Error("Usuario no encontrado");
+
+  return res.json(user);
+}
+
+async function cargarSaldo(req, res) {
+  const { name } = req.params;
+  const { saldo } = req.body;
+
+  const user = await User.findOne({ where: { name: name } });
+
+  if (user == null) throw new Error("Repositorio no encontrado");
+
+  await User.increment({ saldo: saldo }, { where: { name: name } });
 
   return res.json(user);
 }
@@ -30,4 +41,5 @@ async function getUser(req, res) {
 module.exports = {
   createUser,
   getUser,
+  cargarSaldo
 };
