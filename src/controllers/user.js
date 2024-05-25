@@ -6,6 +6,10 @@ async function createUser(req, res) {
 
   console.log(name, rol);
 
+  if (name == undefined) throw new Error("Nombre de usuario no insertado");
+
+  if (rol == undefined) throw new Error("Rol no asignado");
+
   const newUser = await User.create({
     name: name,
     rol: rol,
@@ -31,7 +35,7 @@ async function cargarSaldo(req, res) {
 
   const user = await User.findOne({ where: { name: name } });
 
-  if (user == null) throw new Error("Repositorio no encontrado");
+  if (user == null) throw new Error("Usuario no encontrado");
 
   await User.increment({ saldo: saldo }, { where: { name: name } });
 
@@ -41,5 +45,5 @@ async function cargarSaldo(req, res) {
 module.exports = {
   createUser,
   getUser,
-  cargarSaldo
+  cargarSaldo,
 };

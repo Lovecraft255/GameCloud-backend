@@ -1,6 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../../db");
-const User = require("./User");
+
 
 const Game = sequelize.define("Games", {
   id: {
@@ -34,18 +34,9 @@ const Game = sequelize.define("Games", {
   },
 
   precio: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     defaultValue: 0,
-  },
-
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: User,
-      key: "id",
-    },
-  },
+  }
 });
 
 module.exports = Game;
