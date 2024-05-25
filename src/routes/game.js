@@ -1,8 +1,9 @@
 const { Router } = require("express");
-const { uploadGame } = require("../controllers/game");
+const { uploadGame, comprarJuego } = require("../controllers/game");
 
 const app = Router();
 
 app.post("/", uploadGame);
+app.post("/:name", comprarJuego);
 
 module.exports = app;

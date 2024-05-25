@@ -2,7 +2,7 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../../db");
 
 
-const Game = sequelize.define("Games", {
+const Game = sequelize.define("Game", {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
@@ -25,7 +25,7 @@ const Game = sequelize.define("Games", {
 
   genres: {
     type: DataTypes.TEXT,
-    allowNull: false,
+    allowNull: true,
   },
 
   imagens: {
