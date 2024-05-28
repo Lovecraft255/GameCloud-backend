@@ -29,6 +29,18 @@ async function getUser(req, res) {
   return res.json(user);
 }
 
+async function updateUser(req, res) {
+  const { id } = req.params;
+
+  const user = await User.findOne({ where: { id: id } });
+
+  if (user == null) throw new error("Usuario no encontrado");
+
+  await User.update({ ...req.body }, { where: { id: id } });
+
+  return res.json(user);
+}
+
 async function cargarSaldo(req, res) {
   const { name } = req.params;
   const { saldo } = req.body;
@@ -42,9 +54,15 @@ async function cargarSaldo(req, res) {
   return res.json(user);
 }
 
+async function eliminarPerfil(req, res) {
+  const { name } = req.body;
+  await User.destroy({ where: { name: name } });
+}
 
 module.exports = {
   createUser,
   getUser,
   cargarSaldo,
+  eliminarPerfil,
+  updateUser,
 };
