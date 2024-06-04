@@ -28,6 +28,30 @@ async function getGame(req, res) {
   return res.json(game);
 }
 
+async function modJuego(req, res) {
+  const { id } = req.params;
+
+  const game = await Game.findOne({ where: { id: id } });
+
+  if (game == null) throw new error("Juego no encontrado");
+
+  await Game.update({ ...req.body }, { where: { id: id } });
+
+  return res.json(game);
+}
+
+async function eliminarJuego(req, res) {
+  const { id } = req.params;
+
+  const game = await Game.findOne({ where: { id: id } });
+
+  if (game == null) throw new error("Juego no encontrado");
+
+  await Game.destroy({ where: { id: id } });
+
+  return res.json(game);
+}
+
 async function comprarJuego(req, res) {
   const { id } = req.body;
   const { name } = req.params;
@@ -43,4 +67,6 @@ module.exports = {
   uploadGame,
   comprarJuego,
   getGame,
+  modJuego,
+  eliminarJuego,
 };

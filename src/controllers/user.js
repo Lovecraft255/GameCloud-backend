@@ -42,21 +42,27 @@ async function updateUser(req, res) {
 }
 
 async function cargarSaldo(req, res) {
-  const { name } = req.params;
+  const { id } = req.params;
   const { saldo } = req.body;
 
-  const user = await User.findOne({ where: { name: name } });
+  const user = await User.findOne({ where: { id: id } });
 
   if (user == null) throw new Error("Usuario no encontrado");
 
-  await User.increment({ saldo: saldo }, { where: { name: name } });
+  await User.increment({ saldo: saldo }, { where: { id: id } });
 
   return res.json(user);
 }
 
 async function eliminarPerfil(req, res) {
-  const { name } = req.body;
-  await User.destroy({ where: { name: name } });
+  const { id } = req.body;
+
+  const user = await User.findOne({ where: { id: id } });
+
+  if (user == null) throw new error("Usuario no encontrado");
+
+  await User.destroy({ where: { id: id } });
+  return res.json(user);
 }
 
 module.exports = {

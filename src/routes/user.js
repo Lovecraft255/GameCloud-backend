@@ -12,7 +12,7 @@ const app = Router();
 app.post("/", createUser);
 app.patch("/:id", updateUser);
 app.get("/:id", getUser);
-app.patch("/:name", cargarSaldo);
-app.delete("/:name", eliminarPerfil);
+app.patch("/:id", cargarSaldo);
+app.delete("/:id", eliminarPerfil);
 
 module.exports = app;
