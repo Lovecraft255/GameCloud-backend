@@ -1,6 +1,7 @@
 const { Router } = require("express");
 const {
-  createUser,
+  singUp,
+  signIn,
   getUser,
   cargarSaldo,
   eliminarPerfil,
@@ -9,10 +10,11 @@ const {
 
 const app = Router();
 
-app.post("/", createUser);
-app.patch("/:id", updateUser);
-app.get("/:id", getUser);
-app.patch("/:id", cargarSaldo);
-app.delete("/:id", eliminarPerfil);
+app.post("/signup", singUp);
+app.post("/singin", signIn);
+app.patch("/updateuser/:name", updateUser);
+app.get("/getuser/:name", getUser);
+app.patch("/cargarsaldo/:name", cargarSaldo);
+app.delete("/eliminarperfil", eliminarPerfil);
 
 module.exports = app;

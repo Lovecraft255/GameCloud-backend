@@ -1,72 +1,132 @@
 const { where } = require("sequelize");
 const User = require("../models/User");
+const bcrypt = require("bcrypt");
+const jst = require("jsonwebtoken");
+const authConfig = require("../../auth");
 
-async function createUser(req, res) {
-  const { name, rol } = req.body;
+async function singUp(req, res) {
+  const { name, rol, password } = req.body;
 
-  console.log(name, rol);
+  if (!name) throw new Error("Nombre de usuario no insertado");
+  if (!rol) throw new Error("Rol no asignado");
+  if (!password) throw new Error("Contraseña no ingresada");
 
-  if (name == undefined) throw new Error("Nombre de usuario no insertado");
+  const hashedPassword = bcrypt.hashSync(
+    password,
+    Number.parseInt(authConfig.rounds)
+  );
 
-  if (rol == undefined) throw new Error("Rol no asignado");
+  try {
+    const newUser = await User.create({
+      name: name,
+      rol: rol,
+      password: hashedPassword,
+    });
 
-  const newUser = await User.create({
-    name: name,
-    rol: rol,
-  });
+    const token = jst.sign({ user: newUser }, authConfig.secret, {
+      expiresIn: authConfig.expires,
+    });
 
-  console.log(`Usuario creado: ${newUser}`);
+    res.json({
+      user: newUser,
+      token: token,
+    });
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
+}
 
-  return res.json(newUser);
+async function signIn(req, res) {
+  let { name, password } = req.body;
+
+  try {
+    let user = await User.findOne({ where: { name: name } });
+
+    if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
+
+    if (bcrypt.compareSync(password, user.password)) {
+      const token = jst.sign({ user: user }, authConfig.secret, {
+        expiresIn: authConfig.expires,
+      });
+
+      res.json({
+        user: user,
+        token: token,
+      });
+    } else {
+      res.status(401).json({ msg: "Contraseña incorrecta" });
+    }
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
 }
 
 async function getUser(req, res) {
-  const { id } = req.params;
-  const user = await User.findOne({ where: { id: id } });
+  const { name } = req.params;
 
-  if (user == null) throw new Error("Usuario no encontrado");
+  try {
+    const user = await User.findOne({ where: { name: name } });
 
-  return res.json(user);
+    if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
+
+    return res.json(user);
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
 }
 
 async function updateUser(req, res) {
-  const { id } = req.params;
+  const { name } = req.params;
 
-  const user = await User.findOne({ where: { id: id } });
+  try {
+    const user = await User.findOne({ where: { name: name } });
 
-  if (user == null) throw new error("Usuario no encontrado");
+    if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
 
-  await User.update({ ...req.body }, { where: { id: id } });
+    await User.update({ ...req.body }, { where: { name: name } });
 
-  return res.json(user);
+    res.json(user);
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
 }
 
 async function cargarSaldo(req, res) {
-  const { id } = req.params;
+  const { name } = req.params;
   const { saldo } = req.body;
 
-  const user = await User.findOne({ where: { id: id } });
+  try {
+    const user = await User.findOne({ where: { name: name } });
 
-  if (user == null) throw new Error("Usuario no encontrado");
+    if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
 
-  await User.increment({ saldo: saldo }, { where: { id: id } });
+    await User.increment({ saldo: saldo }, { where: { name: name } });
 
-  return res.json(user);
+    res.json(user);
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
 }
 
 async function eliminarPerfil(req, res) {
-  const { id } = req.body;
+  const { name } = req.body;
 
-  const user = await User.findOne({ where: { id: id } });
+  try {
+    const user = await User.findOne({ where: { name: name } });
 
-  if (user == null) throw new error("Usuario no encontrado");
+    if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
 
-  await User.destroy({ where: { id: id } });
-  return res.json(user);
+    await User.destroy({ where: { name: name } });
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
 }
 
 module.exports = {
-  createUser,
+  singUp,
+  signIn,
   getUser,
   cargarSaldo,
   eliminarPerfil,
