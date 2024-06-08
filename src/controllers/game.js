@@ -3,64 +3,86 @@ const Game = require("../models/Game");
 async function uploadGame(req, res) {
   const { name, company, precio } = req.body;
 
-  if (name == undefined) throw new Error("Nombre de usuario no insertado");
-  if (company == undefined) throw new Error("Compania no insertada");
-  if (precio == undefined) throw new Error("Precio no insertado");
+  if (!name) throw new Error("Nombre de usuario no insertado");
+  if (!company) throw new Error("Compania no insertada");
+  if (!precio) throw new Error("Precio no insertado");
 
-  const newGame = await Game.create({
-    name: name,
-    company: company,
-    precio: precio,
-  });
+  try {
+    const newGame = await Game.create({
+      name: name,
+      company: company,
+      precio: precio,
+    });
 
-  console.log(`Juego nuevo creado: ${newGame}`);
+    console.log(`Juego nuevo creado: ${newGame}`);
 
-  return res.json(newGame);
+    return res.json(newGame);
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
 }
 
 async function getGame(req, res) {
-  const { id } = req.params;
+  try {
+    const { name } = req.body;
 
-  const game = await Game.findOne({ where: { id: id } });
+    const game = await Game.findOne({ where: { name: name } });
 
-  if (game == null) throw new error("Juego no encontrado");
+    if (!game) res.status(404).json({ msg: "Juego no encontrado" });
 
-  return res.json(game);
+    return res.json(game);
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
 }
 
 async function modJuego(req, res) {
-  const { id } = req.params;
+  try {
+    const { name } = req.params;
 
-  const game = await Game.findOne({ where: { id: id } });
+    const game = await Game.findOne({ where: { name: name } });
 
-  if (game == null) throw new error("Juego no encontrado");
+    if (!game) res.status(404).json({ msg: "Juego no encontrado" });
 
-  await Game.update({ ...req.body }, { where: { id: id } });
+    await Game.update({ ...req.body }, { where: { name: name } });
 
-  return res.json(game);
+    return res.json(game);
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
 }
 
 async function eliminarJuego(req, res) {
-  const { id } = req.params;
+  try {
+    const { name } = req.params;
 
-  const game = await Game.findOne({ where: { id: id } });
+    const game = await Game.findOne({ where: { name: name } });
 
-  if (game == null) throw new error("Juego no encontrado");
+    if (!game) res.status(404).json({ msg: "Juego no encontrado" });
 
-  await Game.destroy({ where: { id: id } });
+    await Game.destroy({ where: { name: name } });
 
-  return res.json(game);
+    return res.json(game);
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
 }
 
 async function comprarJuego(req, res) {
-  const { id } = req.body;
-  const { name } = req.params;
+  try {
+    const { id } = req.body;
+    const { name } = req.params;
 
-  const game = await Game.findOne({ where: { name: name } });
+    const game = await Game.findOne({ where: { name: name } });
 
-  await game.addUser(id);
+    if (!game) res.status(404).json({ msg: "Juego no encontrado" });
 
-  return res.json({});
+    await game.addUser(id);
+
+    return res.json({});
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
 }
 
 module.exports = {
