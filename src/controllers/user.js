@@ -39,7 +39,9 @@ async function singUp(req, res) {
 async function signIn(req, res) {
   let { name, password } = req.body;
 
-  try {
+  console.log(name);
+
+  /*try {
     let user = await User.findOne({ where: { name: name } });
 
     if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
@@ -58,7 +60,7 @@ async function signIn(req, res) {
     }
   } catch (error) {
     res.status(500).json(error.message);
-  }
+  }*/
 }
 
 async function getUser(req, res) {

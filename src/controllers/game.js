@@ -22,9 +22,21 @@ async function uploadGame(req, res) {
   }
 }
 
+async function getAllGames(req, res) {
+  try {
+    const games = await Game.findAll();
+
+    if (!games) res.status(404).json({ msg: "Juego no encontrado" });
+
+    return res.json(games);
+  } catch (error) {
+    res.status(500).json(error.message);
+  }
+}
+
 async function getGame(req, res) {
   try {
-    const { name } = req.body;
+    const { name } = req.params;
 
     const game = await Game.findOne({ where: { name: name } });
 
@@ -91,4 +103,5 @@ module.exports = {
   getGame,
   modJuego,
   eliminarJuego,
+  getAllGames,
 };
