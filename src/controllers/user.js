@@ -2,7 +2,34 @@ const { where } = require("sequelize");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jst = require("jsonwebtoken");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+} = require("../auth/generateTokens");
 const authConfig = require("../../auth");
+const Token = require("../models/Token");
+const getUserInfo = require("../auth/getUserInfo");
+
+async function comparePassword(password, hash) {
+  const same = await bcrypt.compare(password, hash);
+  return same;
+}
+
+function createAccessToken() {
+  return generateAccessToken(getUserInfo(User));
+}
+
+async function createRefreshToken(params) {
+  const refreshToken = generateRefreshToken(getUserInfo(User));
+
+  try {
+    await new Token({ token: refreshToken }).save();
+
+    return refreshToken;
+  } catch (error) {
+    console.log(error);
+  }
+}
 
 async function singUp(req, res) {
   const { name, rol, password } = req.body;
@@ -46,25 +73,21 @@ async function signIn(req, res) {
 
     if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
 
-    if (bcrypt.compareSync(password, user.password)) {
-      const token = jst.sign({ user: user }, authConfig.secret, {
-        expiresIn: authConfig.expires,
-      });
+    const correctPass = comparePassword(password, user.password);
 
-      res.json({
-        user: user,
-        token: token,
-      });
-    } else {
-      res.status(401).json({ msg: "Contraseña incorrecta" });
-    }
+    if (!correctPass) res.status(401).json({ msg: "Contraseña incorrecta" });
+
+    const accessToken = createAccessToken();
+    const refreshToken = await createRefreshToken();
+
+    return res.json(user, accessToken, refreshToken);
   } catch (error) {
     res.status(500).json(error.message);
   }
 }
 
 async function getUser(req, res) {
-  const { name } = req.params;
+  const { name } = req.body;
 
   try {
     const user = await User.findOne({ where: { name: name } });
