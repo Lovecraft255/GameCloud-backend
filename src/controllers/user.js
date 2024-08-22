@@ -1,4 +1,3 @@
-const { where } = require("sequelize");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jst = require("jsonwebtoken");
@@ -9,6 +8,7 @@ const {
 const authConfig = require("../../auth");
 const Token = require("../models/Token");
 const getUserInfo = require("../auth/getUserInfo");
+const {jsonResponse} = require("../auth/jsonResponse")
 
 async function comparePassword(password, hash) {
   const same = await bcrypt.compare(password, hash);
@@ -80,7 +80,15 @@ async function signIn(req, res) {
     const accessToken = createAccessToken();
     const refreshToken = await createRefreshToken();
 
-    return res.json(user, accessToken, refreshToken);
+    console.log(accessToken);
+
+    return res.json(
+      jsonResponse(200, {
+        accessToken,
+        refreshToken,
+        user: getUserInfo(user),
+      })
+    );
   } catch (error) {
     res.status(500).json(error.message);
   }
