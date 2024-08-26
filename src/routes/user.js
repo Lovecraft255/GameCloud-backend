@@ -13,7 +13,7 @@ const app = Router();
 app.post("/signup", singUp);
 app.post("/singin", signIn);
 app.patch("/updateuser/:name", updateUser);
-app.get("/getuser/:name", getUser);
+app.get("/getuser", getUser);
 app.patch("/cargarsaldo/:name", cargarSaldo);
 app.delete("/eliminarperfil", eliminarPerfil);
 

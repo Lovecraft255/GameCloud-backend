@@ -13,6 +13,7 @@ app.listen(80, function () {
 });
 
 const userRoute = require("./src/routes/user");
+const tokenRoute = require("./src/routes/token");
 const gameRoute = require("./src/routes/game");
 
 app.use(express.json());
@@ -24,6 +25,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/user", userRoute);
+app.use("/token", tokenRoute);
 app.use("/game", gameRoute);
 
 module.exports = app;
