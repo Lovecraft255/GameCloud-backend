@@ -5,10 +5,9 @@ const {
   generateAccessToken,
   generateRefreshToken,
 } = require("../auth/generateTokens");
-const authConfig = require("../../auth");
 const Token = require("../models/Token");
 const getUserInfo = require("../auth/getUserInfo");
-const {jsonResponse} = require("../auth/jsonResponse")
+const  jsonResponse = require("../auth/jsonResponse");
 
 async function comparePassword(password, hash) {
   const same = await bcrypt.compare(password, hash);
@@ -38,25 +37,15 @@ async function singUp(req, res) {
   if (!rol) throw new Error("Rol no asignado");
   if (!password) throw new Error("Contraseña no ingresada");
 
-  const hashedPassword = bcrypt.hashSync(
-    password,
-    Number.parseInt(authConfig.rounds)
-  );
-
   try {
     const newUser = await User.create({
       name: name,
       rol: rol,
-      password: hashedPassword,
-    });
-
-    const token = jst.sign({ user: newUser }, authConfig.secret, {
-      expiresIn: authConfig.expires,
+      password: password,
     });
 
     res.json({
       user: newUser,
-      token: token,
     });
   } catch (error) {
     res.status(500).json(error.message);
@@ -157,6 +146,10 @@ async function eliminarPerfil(req, res) {
   }
 }
 
+async function getUserToken(req, res) {
+  res.status(200).json(jsonResponse(200, req.user));
+}
+
 module.exports = {
   singUp,
   signIn,
@@ -164,4 +157,5 @@ module.exports = {
   cargarSaldo,
   eliminarPerfil,
   updateUser,
+  getUserToken,
 };

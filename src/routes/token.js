@@ -1,9 +1,9 @@
 const { Router } = require("express");
 
-const { generatToken } = require("../controllers/token");
+const  generateToken = require("../controllers/token");
 
 const app = Router();
 
-app.post("/refresh_token", generatToken);
+app.post("/refresh_token", generateToken);
 
 module.exports = app;
