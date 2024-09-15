@@ -1,8 +1,7 @@
-const { where } = require("sequelize");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
-const jst = require("jsonwebtoken");
-const authConfig = require("../../auth");
+const jwt = require("jsonwebtoken");
+const { createAccessToken } = require("../libs/jwt");
 
 async function singUp(req, res) {
   const { name, rol, password } = req.body;
@@ -11,58 +10,53 @@ async function singUp(req, res) {
   if (!rol) throw new Error("Rol no asignado");
   if (!password) throw new Error("Contraseña no ingresada");
 
-  const hashedPassword = bcrypt.hashSync(
-    password,
-    Number.parseInt(authConfig.rounds)
-  );
-
   try {
+    const hash = await bcrypt.hash(password, 10);
+
     const newUser = await User.create({
       name: name,
       rol: rol,
-      password: hashedPassword,
+      password: hash,
     });
 
-    const token = jst.sign({ user: newUser }, authConfig.secret, {
-      expiresIn: authConfig.expires,
-    });
+    const userSaved = await newUser.save();
+    const token = await createAccessToken({ id: userSaved._id });
+    res.cookie("token", token);
 
     res.json({
-      user: newUser,
-      token: token,
+      user: userSaved,
     });
   } catch (error) {
-    res.status(500).json(error.message);
+    res.status(400).json(error.message);
   }
 }
 
 async function signIn(req, res) {
-  let { name, password } = req.body;
+  const { name, password } = req.body;
 
-  console.log(name);
+  if (!name) throw new Error("Nombre de usuario no insertado");
+  if (!password) throw new Error("Contraseña no ingresada");
 
   try {
-    let user = await User.findOne({ where: { name: name } });
+    const userFound = await User.findOne({ name });
 
-    if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
+    if (!userFound) res.status(400).json({ message: "user not found" });
 
-    if (bcrypt.compareSync(password, user.password)) {
-      const token = jst.sign({ user: user }, authConfig.secret, {
-        expiresIn: authConfig.expires,
-      });
+    const isMatch = await bcrypt.compare(password, userFound.password);
 
-      res.json({
-        user: user,
-        token: token,
-      });
-    } else {
-      res.status(401).json({ msg: "Contraseña incorrecta" });
-    }
+    if (!isMatch) res.status(400).json({ message: "incorrect password" });
+
+    const token = await createAccessToken({ id: userFound._id });
+
+    res.cookie("token", token);
+
+    res.json({
+      user: userFound,
+    });
   } catch (error) {
     res.status(500).json(error.message);
   }
 }
-
 async function getUser(req, res) {
   const { name } = req.params;
 
