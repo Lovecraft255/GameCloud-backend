@@ -13,6 +13,7 @@ app.listen(80, function () {
 });
 
 const userRoute = require("./src/routes/user");
+
 const gameRoute = require("./src/routes/game");
 
 app.use(express.json());

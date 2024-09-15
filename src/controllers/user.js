@@ -35,6 +35,7 @@ async function signIn(req, res) {
   const { name, password } = req.body;
 
   if (!name) throw new Error("Nombre de usuario no insertado");
+  if (!rol) throw new Error("Rol no asignado");
   if (!password) throw new Error("Contraseña no ingresada");
 
   try {
