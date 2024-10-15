@@ -20,7 +20,8 @@ async function singUp(req, res) {
     });
 
     const userSaved = await newUser.save();
-    const token = await createAccessToken({ id: userSaved._id });
+
+    const token = await createAccessToken({ id: userSaved.dataValues.id });
     res.cookie("token", token);
 
     res.json({
@@ -35,11 +36,10 @@ async function signIn(req, res) {
   const { name, password } = req.body;
 
   if (!name) throw new Error("Nombre de usuario no insertado");
-  if (!rol) throw new Error("Rol no asignado");
   if (!password) throw new Error("Contraseña no ingresada");
 
   try {
-    const userFound = await User.findOne({ name });
+    const userFound = await User.findOne({ where: { name: name } });
 
     if (!userFound) res.status(400).json({ message: "user not found" });
 
@@ -47,7 +47,7 @@ async function signIn(req, res) {
 
     if (!isMatch) res.status(400).json({ message: "incorrect password" });
 
-    const token = await createAccessToken({ id: userFound._id });
+    const token = await createAccessToken({ id: userFound.id });
 
     res.cookie("token", token);
 
@@ -58,6 +58,12 @@ async function signIn(req, res) {
     res.status(500).json(error.message);
   }
 }
+
+function loguOut(req, res) {
+  res.cookie("token", "", { expires: new Date(0) });
+  return res.sendStatus(200);
+}
+
 async function getUser(req, res) {
   const { name } = req.params;
 
@@ -70,6 +76,20 @@ async function getUser(req, res) {
   } catch (error) {
     res.status(500).json(error.message);
   }
+}
+
+async function profile(req, res) {
+  console.log(req.user);
+  const userFound = await User.findByPk(req.user.id);
+
+  if (!userFound) res.status(400).json({ msg: "Usuario no encontrado" });
+  console.log(userFound);
+
+  return res.json({
+    id: userFound.id,
+    name: userFound.name,
+    password: userFound.password,
+  });
 }
 
 async function updateUser(req, res) {
@@ -128,4 +148,6 @@ module.exports = {
   cargarSaldo,
   eliminarPerfil,
   updateUser,
+  loguOut,
+  profile,
 };
