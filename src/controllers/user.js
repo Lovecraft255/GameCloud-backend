@@ -4,18 +4,20 @@ const jwt = require("jsonwebtoken");
 const { createAccessToken } = require("../libs/jwt");
 
 async function singUp(req, res) {
-  const { name, rol, password } = req.body;
+  const { name, email, password } = req.body;
 
   if (!name) throw new Error("Nombre de usuario no insertado");
-  if (!rol) throw new Error("Rol no asignado");
+  if (!email) throw new Error("Email no ingresado");
   if (!password) throw new Error("Contraseña no ingresada");
 
   try {
+    const userFound = await User.findOne({ where: { email } });
+    if (userFound) return res.status(400).json(["esta email ya existe"]);
     const hash = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
       name: name,
-      rol: rol,
+      email: email,
       password: hash,
     });
 
@@ -33,19 +35,19 @@ async function singUp(req, res) {
 }
 
 async function signIn(req, res) {
-  const { name, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!name) throw new Error("Nombre de usuario no insertado");
+  if (!email) throw new Error("Email no insertado");
   if (!password) throw new Error("Contraseña no ingresada");
 
   try {
-    const userFound = await User.findOne({ where: { name: name } });
+    const userFound = await User.findOne({ where: { email: email } });
 
-    if (!userFound) res.status(400).json({ message: "user not found" });
+    if (!userFound) res.status(400).json({ message: "Usuario no encontrado" });
 
     const isMatch = await bcrypt.compare(password, userFound.password);
 
-    if (!isMatch) res.status(400).json({ message: "incorrect password" });
+    if (!isMatch) res.status(400).json({ message: "Contraseña incorrecta" });
 
     const token = await createAccessToken({ id: userFound.id });
 
@@ -65,10 +67,10 @@ function loguOut(req, res) {
 }
 
 async function getUser(req, res) {
-  const { name } = req.params;
+  const { email } = req.params;
 
   try {
-    const user = await User.findOne({ where: { name: name } });
+    const user = await User.findOne({ where: { email: email } });
 
     if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
 
@@ -88,19 +90,20 @@ async function profile(req, res) {
   return res.json({
     id: userFound.id,
     name: userFound.name,
+    email: userFound.email,
     password: userFound.password,
   });
 }
 
 async function updateUser(req, res) {
-  const { name } = req.params;
+  const { email } = req.params;
 
   try {
-    const user = await User.findOne({ where: { name: name } });
+    const user = await User.findOne({ where: { email: email } });
 
     if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
 
-    await User.update({ ...req.body }, { where: { name: name } });
+    await User.update({ ...req.body }, { where: { email: email } });
 
     res.json(user);
   } catch (error) {
@@ -109,15 +112,15 @@ async function updateUser(req, res) {
 }
 
 async function cargarSaldo(req, res) {
-  const { name } = req.params;
+  const { email } = req.params;
   const { saldo } = req.body;
 
   try {
-    const user = await User.findOne({ where: { name: name } });
+    const user = await User.findOne({ where: { email: email } });
 
     if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
 
-    await User.increment({ saldo: saldo }, { where: { name: name } });
+    await User.increment({ saldo: saldo }, { where: { email: email } });
 
     res.json(user);
   } catch (error) {
@@ -126,14 +129,14 @@ async function cargarSaldo(req, res) {
 }
 
 async function eliminarPerfil(req, res) {
-  const { name } = req.body;
+  const { email } = req.body;
 
   try {
-    const user = await User.findOne({ where: { name: name } });
+    const user = await User.findOne({ where: { email: email } });
 
     if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
 
-    await User.destroy({ where: { name: name } });
+    await User.destroy({ where: { email: email } });
 
     res.json(user);
   } catch (error) {

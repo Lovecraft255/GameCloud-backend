@@ -50,19 +50,12 @@ const User = sequelize.define("User", {
     defaultValue: 0,
   },
 
-  rol: {
+  email: {
     type: DataTypes.TEXT,
     allowNull: false,
 
     validate: {
-      isAlpha: {
-        msg: "Solo se permiten roles con caracteristicas alfabeticas",
-      },
-
-      len: {
-        args: [5, 13],
-        msg: "El rol debe tener minimo 5 caracteres",
-      },
+      isEmail: true,
     },
   },
 });
