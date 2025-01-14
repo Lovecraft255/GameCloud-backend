@@ -37,17 +37,20 @@ async function singUp(req, res) {
 async function signIn(req, res) {
   const { email, password } = req.body;
 
-  if (!email) throw new Error("Email no insertado");
-  if (!password) throw new Error("Contraseña no ingresada");
+  if (!email) return res.status(400).json({ message: "Email no insertado" });
+  if (!password)
+    return res.status(400).json({ message: "Contraseña no insertada" });
 
   try {
     const userFound = await User.findOne({ where: { email: email } });
 
-    if (!userFound) res.status(400).json({ message: "Usuario no encontrado" });
+    if (!userFound)
+      return res.status(400).json({ message: "Usuario no encontrado" });
 
     const isMatch = await bcrypt.compare(password, userFound.password);
 
-    if (!isMatch) res.status(400).json({ message: "Contraseña incorrecta" });
+    if (!isMatch)
+      return res.status(400).json({ message: "Contraseña incorrecta" });
 
     const token = await createAccessToken({ id: userFound.id });
 
@@ -57,7 +60,7 @@ async function signIn(req, res) {
       user: userFound,
     });
   } catch (error) {
-    res.status(500).json(error.message);
+    await res.status(500).json(error.message);
   }
 }
 
