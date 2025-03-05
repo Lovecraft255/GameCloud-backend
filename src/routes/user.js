@@ -7,10 +7,11 @@ const {
   eliminarPerfil,
   updateUser,
   loguOut,
-  profile
+  profile,
+  verifyToken,
 } = require("../controllers/user");
 
-const {authRequired} = require("../middleware/validateToken")
+const { authRequired } = require("../middleware/validateToken");
 
 const app = Router();
 
@@ -20,6 +21,7 @@ app.post("/logout", loguOut);
 app.patch("/updateuser/:name", updateUser);
 app.patch("/cargarsaldo/:name", cargarSaldo);
 app.delete("/eliminarperfil", eliminarPerfil);
-app.get("/profile", authRequired, profile)
+app.get("/profile", authRequired, profile);
+app.get("/verify", verifyToken);
 
 module.exports = app;

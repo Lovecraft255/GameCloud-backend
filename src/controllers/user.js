@@ -2,6 +2,7 @@ const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { createAccessToken } = require("../libs/jwt");
+const { SECRET_TOKEN } = require("../../config");
 
 async function singUp(req, res) {
   const { name, email, password } = req.body;
@@ -147,6 +148,24 @@ async function eliminarPerfil(req, res) {
   }
 }
 
+async function verifyToken(req, res) {
+  const { token } = req.cookies;
+  if (!token) return res.status(401).json({ message: "Sin autorizacion" });
+
+  try {
+    jwt.verify(token, SECRET_TOKEN, async (err, user) => {
+      if (err) return res.status(401).json({ message: "Sin autorizacion" });
+      const userFound = await User.findByPk(user.id);
+      if (!userFound) res.status(401).json({ message: "Sin autorizacion" });
+      return res.json({
+        id: userFound.id,
+        username: userFound.username,
+        email: userFound.email,
+      });
+    });
+  } catch (error) {}
+}
+
 module.exports = {
   singUp,
   signIn,
@@ -156,4 +175,5 @@ module.exports = {
   updateUser,
   loguOut,
   profile,
+  verifyToken,
 };
