@@ -35,7 +35,7 @@ const User = sequelize.define("User", {
     },
   },
 
-  prohilePhoto: {
+  profilePhoto: {
     type: DataTypes.TEXT(200),
     defaultValue: "",
   },

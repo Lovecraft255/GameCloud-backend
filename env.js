@@ -2,9 +2,9 @@ require("dotenv").config({ path: "${__dirname}/../.env" });
 
 const PORT = process.env.PORT || 3001;
 
-const USER = process.env.USER || "postgres";
+const USER = process.env.USER || "raiden";
 const PASSWORD = process.env.PASSWORD || "dante";
 const HOST = process.env.HOST || "localhost";
-const DB_NAME = process.env.DB_NAME || "GameCloud";
+const DB_NAME = process.env.DB_NAME || "gamecloud";
 
 module.exports = { PORT, USER, PASSWORD, HOST, DB_NAME };

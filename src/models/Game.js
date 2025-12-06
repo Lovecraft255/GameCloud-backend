@@ -43,10 +43,10 @@ const Game = sequelize.define("Game", {
 
   genres: {
     type: DataTypes.TEXT,
-    allowNull: true,
+    allowNull: false,
   },
 
-  imagens: {
+  imagenes: {
     type: DataTypes.TEXT,
     defaultValue: "",
   },
