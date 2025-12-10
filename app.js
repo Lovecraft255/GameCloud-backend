@@ -20,6 +20,7 @@ app.listen(3000, function () {
 const userRoute = require("./src/routes/user");
 
 const gameRoute = require("./src/routes/game");
+const authRoute = require("./src/routes/auth");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -32,5 +33,6 @@ app.get("/", (req, res) => {
 
 app.use("/user", userRoute);
 app.use("/game", gameRoute);
+app.use("/auth", authRoute);
 
 module.exports = app;

@@ -2,7 +2,7 @@ const { PORT } = require("./env");
 const app = require("./app");
 const User = require("./src/models/User");
 const Game = require("./src/models/Game");
-const sequelize = require("./db");
+const sequelize = require("./src/config/db");
 
 
 User.belongsToMany(Game, { through: "UserGame" });

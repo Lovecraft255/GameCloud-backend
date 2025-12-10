@@ -4,67 +4,6 @@ const jwt = require("jsonwebtoken");
 const { createAccessToken } = require("../libs/jwt");
 const { SECRET_TOKEN } = require("../../config");
 
-async function singUp(req, res) {
-  const { name, email, password } = req.body;
-
-  if (!name) throw new Error("Nombre de usuario no insertado");
-  if (!email) throw new Error("Email no ingresado");
-  if (!password) throw new Error("Contraseña no ingresada");
-
-  try {
-    const userFound = await User.findOne({ where: { email } });
-    if (userFound) return res.status(400).json(["esta email ya existe"]);
-    const hash = await bcrypt.hash(password, 10);
-
-    const newUser = await User.create({
-      name: name,
-      email: email,
-      password: hash,
-    });
-
-    const userSaved = await newUser.save();
-
-    const token = await createAccessToken({ id: userSaved.dataValues.id });
-    res.cookie("token", token);
-
-    res.json({
-      user: userSaved,
-    });
-  } catch (error) {
-    res.status(400).json(error.message);
-  }
-}
-
-async function signIn(req, res) {
-  const { email, password } = req.body;
-
-  if (!email) return res.status(400).json({ message: "Email no insertado" });
-  if (!password)
-    return res.status(400).json({ message: "Contraseña no insertada" });
-
-  try {
-    const userFound = await User.findOne({ where: { email: email } });
-
-    if (!userFound)
-      return res.status(400).json({ message: "Usuario no encontrado" });
-
-    const isMatch = await bcrypt.compare(password, userFound.password);
-
-    if (!isMatch)
-      return res.status(400).json({ message: "Contraseña incorrecta" });
-
-    const token = await createAccessToken({ id: userFound.id });
-
-    res.cookie("token", token);
-
-    res.json({
-      user: userFound,
-    });
-  } catch (error) {
-    await res.status(500).json(error.message);
-  }
-}
-
 function loguOut(req, res) {
   res.cookie("token", "", { expires: new Date(0) });
   return res.sendStatus(200);
@@ -82,21 +21,6 @@ async function getUser(req, res) {
   } catch (error) {
     res.status(500).json(error.message);
   }
-}
-
-async function profile(req, res) {
-  console.log(req.user);
-  const userFound = await User.findByPk(req.user.id);
-
-  if (!userFound) res.status(400).json({ msg: "Usuario no encontrado" });
-  console.log(userFound);
-
-  return res.json({
-    id: userFound.id,
-    name: userFound.name,
-    email: userFound.email,
-    password: userFound.password,
-  });
 }
 
 async function updateUser(req, res) {
@@ -148,32 +72,10 @@ async function eliminarPerfil(req, res) {
   }
 }
 
-async function verifyToken(req, res) {
-  const { token } = req.cookies;
-  if (!token) return res.status(401).json({ message: "Sin autorizacion" });
-
-  try {
-    jwt.verify(token, SECRET_TOKEN, async (err, user) => {
-      if (err) return res.status(401).json({ message: "Sin autorizacion" });
-      const userFound = await User.findByPk(user.id);
-      if (!userFound) res.status(401).json({ message: "Sin autorizacion" });
-      return res.json({
-        id: userFound.id,
-        username: userFound.username,
-        email: userFound.email,
-      });
-    });
-  } catch (error) {}
-}
-
 module.exports = {
-  singUp,
-  signIn,
   getUser,
   cargarSaldo,
   eliminarPerfil,
   updateUser,
   loguOut,
-  profile,
-  verifyToken,
 };
