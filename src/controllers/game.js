@@ -1,11 +1,13 @@
+const { appError } = require("../Errors/appError");
+const { validationError } = require("../Errors/validationErrors");
 const Game = require("../models/Game");
 
 async function uploadGame(req, res) {
   const { name, company, precio } = req.body;
 
-  if (!name) throw new Error("Nombre de usuario no insertado");
-  if (!company) throw new Error("Compania no insertada");
-  if (!precio) throw new Error("Precio no insertado");
+  if (!name) throw new validationError("Nombre no ingresado");
+  if (!company) throw new validationError("Compañia no ingresada");
+  if (!precio) throw new validationError("Precio no insertado");
 
   try {
     const newGame = await Game.create({
@@ -18,7 +20,7 @@ async function uploadGame(req, res) {
 
     return res.json(newGame);
   } catch (error) {
-    res.status(500).json(error.message);
+    next(error);
   }
 }
 
@@ -26,11 +28,11 @@ async function getAllGames(req, res) {
   try {
     const games = await Game.findAll();
 
-    if (!games) res.status(404).json({ msg: "Juego no encontrado" });
+    if (!games) throw new appError("Juegos no encontrados", 404);
 
     return res.json(games);
   } catch (error) {
-    res.status(500).json(error.message);
+    next(error);
   }
 }
 
@@ -40,11 +42,11 @@ async function getGame(req, res) {
 
     const game = await Game.findOne({ where: { name: name } });
 
-    if (!game) res.status(404).json({ msg: "Juego no encontrado" });
+    if (!game) throw new appError("Juego no encontrado", 404);
 
     return res.json(game);
   } catch (error) {
-    res.status(500).json(error.message);
+    next(error);
   }
 }
 
@@ -54,13 +56,13 @@ async function modJuego(req, res) {
 
     const game = await Game.findOne({ where: { name: name } });
 
-    if (!game) res.status(404).json({ msg: "Juego no encontrado" });
+    if (!game) throw new appError("Juego no encontrado", 404);
 
     await Game.update({ ...req.body }, { where: { name: name } });
 
     return res.json(game);
   } catch (error) {
-    res.status(500).json(error.message);
+    next(error);
   }
 }
 
@@ -70,13 +72,13 @@ async function eliminarJuego(req, res) {
 
     const game = await Game.findOne({ where: { name: name } });
 
-    if (!game) res.status(404).json({ msg: "Juego no encontrado" });
+    if (!game) throw new appError("Juego no encontrado", 404);
 
     await Game.destroy({ where: { name: name } });
 
     return res.json(game);
   } catch (error) {
-    res.status(500).json(error.message);
+    next(error);
   }
 }
 
@@ -87,13 +89,13 @@ async function comprarJuego(req, res) {
 
     const game = await Game.findOne({ where: { name: name } });
 
-    if (!game) res.status(404).json({ msg: "Juego no encontrado" });
+    if (!game) throw new appError("Juego no encontrado", 404);
 
     await game.addUser(id);
 
     return res.json({});
   } catch (error) {
-    res.status(500).json(error.message);
+    next(error);
   }
 }
 

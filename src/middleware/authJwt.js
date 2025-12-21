@@ -1,23 +1,27 @@
 const jwt = require("jsonwebtoken");
 const { secret } = require("../config/auth");
 const User = require("../models/User");
+const { authError } = require("../Errors/authError");
 
 verifyToken = async (req, res, next) => {
   try {
     let token = req.headers["x-access-token"];
 
     if (!token) {
-      return res.status(403).json({ message: "No token provided" });
+      throw new authError.unauthorized("No se proporcionó ningún token");
     }
 
     jwt.verify(token, secret, async (err, decoded) => {
       if (err) {
-        return res.status(401).json({ message: "Unauthorized!" });
+        throw new authError.unauthorized("Token inválido o expirado");
       }
       req.UserId = decoded.id;
       next();
     });
-  } catch (error) {}
+    2;
+  } catch (error) {
+    next(error);
+  }
 };
 
 const authJwt = {

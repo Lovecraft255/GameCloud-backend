@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { createAccessToken } = require("../libs/jwt");
 const { SECRET_TOKEN } = require("../../config");
+const { appError } = require("../Errors/appError");
 
 function loguOut(req, res) {
   res.cookie("token", "", { expires: new Date(0) });
@@ -15,11 +16,11 @@ async function getUser(req, res) {
   try {
     const user = await User.findOne({ where: { email: email } });
 
-    if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
+    if (!user) throw new appError("Usuario no encontrado", 404);
 
     return res.json(user);
   } catch (error) {
-    res.status(500).json(error.message);
+    next(error);
   }
 }
 
@@ -29,14 +30,14 @@ async function updateUser(req, res) {
   try {
     const user = await User.findOne({ where: { email: email } });
 
-    if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
+    if (!user) throw new appError("Usuario no encontrado", 404);
 
     await User.update({ ...req.body }, { where: { email: email } });
 
     res.json(user);
   } catch (error) {
-    res.status(500).json(error.message);
-  }
+    next(error);
+  } 
 }
 
 async function cargarSaldo(req, res) {
@@ -46,13 +47,13 @@ async function cargarSaldo(req, res) {
   try {
     const user = await User.findOne({ where: { email: email } });
 
-    if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
+    if (!user) throw new appError("Usuario no encontrado", 404);
 
     await User.increment({ saldo: saldo }, { where: { email: email } });
 
     res.json(user);
   } catch (error) {
-    res.status(500).json(error.message);
+    next(error);
   }
 }
 
@@ -62,13 +63,13 @@ async function eliminarPerfil(req, res) {
   try {
     const user = await User.findOne({ where: { email: email } });
 
-    if (!user) res.status(404).json({ msg: "Usuario no encontrado" });
+    if (!user) throw new appError("Usuario no encontrado", 404);
 
     await User.destroy({ where: { email: email } });
 
     res.json(user);
   } catch (error) {
-    res.status(500).json(error.message);
+    next(error);
   }
 }
 
