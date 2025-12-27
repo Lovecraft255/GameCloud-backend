@@ -1,2 +1,5 @@
 node_modules/*
 guion.txt*
+.env
+package-lock.json
+package.json
