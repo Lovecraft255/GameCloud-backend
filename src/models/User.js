@@ -14,9 +14,8 @@ const User = sequelize.define("User", {
     allowNull: false,
     validate: {
       isAlpha: {
-        msg: "E nombre solo puede tener letras",
+        msg: "El nombre solo puede tener letras",
       },
-
       len: {
         args: [2, 200],
         msg: "El nombre de usuario debe tener minimo 2 caracteres",
@@ -53,11 +52,14 @@ const User = sequelize.define("User", {
   email: {
     type: DataTypes.TEXT,
     allowNull: false,
-
     validate: {
       isEmail: true,
     },
   },
-});
 
+  refreshToken: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+});
 module.exports = User;

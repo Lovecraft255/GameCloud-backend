@@ -1,31 +1,24 @@
 const jwt = require("jsonwebtoken");
-const { secret } = require("../config/auth");
-const User = require("../models/User");
+const { jwtSecret } = require("../config/auth");
 const { authError } = require("../Errors/authError");
 
-verifyToken = async (req, res, next) => {
-  try {
-    let token = req.headers["x-access-token"];
+const verifyToken = (req, res, next) => {
+  const token = req.headers["x-access-token"];
 
-    if (!token) {
-      throw new authError.unauthorized("No se proporcionó ningún token");
+  if (!token) {
+    return next(new authError.unauthorized("No se proporcionó ningún token"));
+  }
+
+  jwt.verify(token, jwtSecret, (err, decoded) => {
+    if (err) {
+      return next(new authError.unauthorized("Token inválido o expirado"));
     }
 
-    jwt.verify(token, secret, async (err, decoded) => {
-      if (err) {
-        throw new authError.unauthorized("Token inválido o expirado");
-      }
-      req.UserId = decoded.id;
-      next();
-    });
-    2;
-  } catch (error) {
-    next(error);
-  }
+    req.userId = decoded.id;
+    next();
+  });
 };
 
-const authJwt = {
-  verifyToken: verifyToken,
+module.exports = {
+  verifyToken,
 };
-
-module.exports = authJwt;

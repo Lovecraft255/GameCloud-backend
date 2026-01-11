@@ -1,10 +1,12 @@
 const User = require("../models/User");
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-const { jwtSecret } = require("../config/auth");
-const { profile } = require("./user");
+const bcrypt = require("bcryptjs");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyToken,
+} = require("../libs/jwt");
 const { validationError } = require("../Errors/validationErrors");
-const { appError } = require("../Errors/appError");
+const {appError} = require("../Errors/appError");
 
 async function singUp(req, res) {
   const { name, email, password } = req.body;
@@ -31,41 +33,133 @@ async function singUp(req, res) {
     next(error);
   }
 }
-
-async function signIn(req, res) {
-  const { email, password } = req.body;
-
-  if (!email) throw new validationError("Email no ingresado");
-  if (!password) throw new validationError("Contraseña no ingresada");
-
+async function login(req, res, next) {
   try {
-    const userFound = await User.findOne({ where: { email: email } });
+    const { email, password } = req.body;
+    if (!email || !password)
+     throw new validationError("Email y contraseña son requeridos");
 
-    if (!userFound)
-      throw new appError("No se encontró ningún usuario con ese email", 404);
+    const user = await User.findOne({ where: { email } });
+    if (!user) throw new appError("No se encontro el usuario", 404);
 
-    const isMatch = await bcrypt.compare(password, userFound.password);
+    const passwordMatches = await bcrypt.compare(password, user.password || "");
+    if (!passwordMatches)
+      throw new validationError("COntraseña incorrecta");
 
-    if (!isMatch)
-      throw new validationError("La contraseña ingresada es incorrecta");
+    const payload = { id: user.id, email: user.email };
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
 
-    const token = jwt.sign({ id: userFound.id }, jwtSecret, {
-      expiresIn: 86400,
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    return res.json({
+      accessToken,
+      refreshToken,
+      user: { id: user.id, email: user.email },
     });
-
-    res.status(200).send({
-      id: userFound.id,
-      name: userFound.name,
-      password: userFound.password,
-      email: userFound.email,
-      profilePhoto: userFound.profilePhoto,
-      saldo: userFound.saldo,
-      gamesAmmount: userFound.gamesAmmount,
-      accesToken: token,
-    });
-  } catch (error) {
-    await res.status(500).json(error.message);
+  } catch (err) {
+    return next(err);
   }
 }
 
-module.exports = { singUp, signIn };
+async function refreshToken(req, res, next) {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken)
+      throw new validationError("Refresh token is required");
+
+    const { valid, decoded, error } = verifyToken(refreshToken);
+    if (!valid)
+      throw new validationError("Invalid refresh token");
+
+    const user = await User.findByPk(decoded.id);
+    if (!user || user.refreshToken !== refreshToken)
+      throw new validationError("Invalid refresh token");
+
+    const payload = { id: user.id, email: user.email };
+    const newAccessToken = generateAccessToken(payload);
+    const newRefreshToken = generateRefreshToken(payload);
+
+    user.refreshToken = newRefreshToken;
+    await user.save();
+
+    return res.json({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+async function logout(req, res, next) {
+  try {
+    const userId = req.body.userId || (req.user && req.user.id);
+    if (!userId) throw new validationError("User ID is required for logout");
+    const user = await User.findByPk(userId);
+    if (user) {
+      user.refreshToken = null;
+      await user.save();
+    }
+    return res.json({ message: "Logged out" });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+async function checkAuthStatus(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    if (!token) throw new validationError("No token provided");
+
+    const { valid, decoded, error } = verifyToken(token);
+    if (valid) {
+      return res.json({ authenticated: true, user: decoded });
+    }
+
+    if (error && error.name === "TokenExpiredError") {
+      const { refreshToken } = req.body;
+      if (!refreshToken)
+        return res
+          .status(401)
+          .json({ authenticated: false, message: "Expired token" });
+
+      const verifyRefresh = verifyToken(refreshToken);
+      if (!verifyRefresh.valid)
+        return res
+          .status(401)
+          .json({ authenticated: false, message: "Invalid refresh token" });
+
+      const user = await User.findByPk(verifyRefresh.decoded.id);
+      if (!user || user.refreshToken !== refreshToken)
+        return res.status(401).json({ authenticated: false });
+
+      const payload = { id: user.id, email: user.email };
+      const newAccessToken = generateAccessToken(payload);
+      const newRefreshToken = generateRefreshToken(payload);
+      user.refreshToken = newRefreshToken;
+      await user.save();
+
+      return res.json({
+        authenticated: true,
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+        user: payload,
+      });
+    }
+
+    return res.status(401).json({ authenticated: false });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = {
+  login,
+  refreshToken,
+  logout,
+  checkAuthStatus,
+  singUp
+};

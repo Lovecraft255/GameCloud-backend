@@ -1,8 +1,7 @@
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { createAccessToken } = require("../libs/jwt");
-const { SECRET_TOKEN } = require("../../config");
+
 const { appError } = require("../Errors/appError");
 
 function loguOut(req, res) {
@@ -11,8 +10,7 @@ function loguOut(req, res) {
 }
 
 async function getUser(req, res) {
-  const { email } = req.params;
-
+  const { email } = req.body;
   try {
     const user = await User.findOne({ where: { email: email } });
 
@@ -37,7 +35,7 @@ async function updateUser(req, res) {
     res.json(user);
   } catch (error) {
     next(error);
-  } 
+  }
 }
 
 async function cargarSaldo(req, res) {

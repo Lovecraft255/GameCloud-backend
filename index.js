@@ -1,19 +1,24 @@
-const { PORT } = require("./env");
+require("dotenv").config();
 const app = require("./app");
-const User = require("./src/models/User");
-const Game = require("./src/models/Game");
 const sequelize = require("./src/config/db");
+const User = require("./src/models/User");
+const Juego = require("./src/models/Game");
 
+const PORT = process.env.PORT || 3001;
 
-User.belongsToMany(Game, { through: "UserGame" });
-Game.belongsToMany(User, { through: "UserGame" });
+User.belongsToMany(Juego, { through: "UserGame" });
+Juego.belongsToMany(User, { through: "UserGame" });
 
 async function start() {
-  await sequelize.sync({
-    alter: true,
-  });
+  try {
+    await sequelize.sync({ alter: true });
 
-  app.listen(PORT, () => console.log("Puerto lanzado en:" + PORT));
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(` Servidor corriendo en puerto ${PORT}`);
+    });
+  } catch (error) {
+    console.error(" Error al iniciar servidor:", error);
+  }
 }
 
 start();

@@ -1,10 +1,13 @@
-const {verifySignUp} = require("../middleware");
-const {singUp, signIn} = require("../controllers/auth");
+const express = require('express');
+const router = express.Router();
+const authController = require('../controllers/auth');
+const verifySignUp = require('../middleware/verifySignUp');
 
-const { Router } = require("express");
-const app = Router();
+// Endpoints básicos: login, refresh, logout, check
+router.post('/login', authController.login);
+router.post('/refresh', authController.refreshToken);
+router.post('/logout', authController.logout);
+router.post('/singup',verifySignUp.verificarMailoUsuarioduplicado, authController.singUp);
+router.get('/check', authController.checkAuthStatus);
 
-app.post("/signup", verifySignUp.verificarMailoUsuarioduplicado, singUp);
-app.post("/signin", signIn);
-
-module.exports = app;
+module.exports = router;
