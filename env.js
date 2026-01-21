@@ -4,7 +4,7 @@ const PORT = process.env.PORT || 3001;
 
 const USER = process.env.USER || "raiden";
 const PASSWORD = process.env.PASSWORD || "dante";
-const HOST = process.env.HOST || "localhost";
+const HOST = process.env.HOST || "https://umwohvoocflwyrhrtzmz.supabase.co";
 const DB_NAME = process.env.DB_NAME || "gamecloud";
 const JWT_SECRET = process.env.JWT_SECRET || "mmikuslovejs";
 
