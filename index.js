@@ -11,7 +11,7 @@ Juego.belongsToMany(User, { through: "UserGame" });
 
 async function start() {
   try {
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
 
     app.listen(PORT, "0.0.0.0", () => {
       console.log(` Servidor corriendo en puerto ${PORT}`);
