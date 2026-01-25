@@ -31,12 +31,12 @@ const Game = sequelize.define("Game", {
     },
   },
 
-  descritption: {
+  description: {
     type: DataTypes.TEXT,
     validate: {
       len: {
         args: [5, 255],
-        msg: "El nombre de la compañia debe ser de mas de 10 caracteres",
+        msg: "La descripción debe tener al menos 5 caracteres",
       },
     },
   },
