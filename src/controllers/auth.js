@@ -6,7 +6,7 @@ const {
   verifyToken,
 } = require("../libs/jwt");
 const { validationError } = require("../Errors/validationErrors");
-const {appError} = require("../Errors/appError");
+const { appError } = require("../Errors/appError");
 
 async function singUp(req, res) {
   const { name, email, password } = req.body;
@@ -37,14 +37,13 @@ async function login(req, res, next) {
   try {
     const { email, password } = req.body;
     if (!email || !password)
-     throw new validationError("Email y contraseña son requeridos");
+      throw new validationError("Email y contraseña son requeridos");
 
     const user = await User.findOne({ where: { email } });
     if (!user) throw new appError("No se encontro el usuario", 404);
 
     const passwordMatches = await bcrypt.compare(password, user.password || "");
-    if (!passwordMatches)
-      throw new validationError("COntraseña incorrecta");
+    if (!passwordMatches) throw new validationError("COntraseña incorrecta");
 
     const payload = { id: user.id, email: user.email };
     const accessToken = generateAccessToken(payload);
@@ -52,10 +51,15 @@ async function login(req, res, next) {
 
     user.refreshToken = refreshToken;
     await user.save();
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true, // Render = HTTPS
+      sameSite: "none", // cross-origin
+      path: "/auth", // opcional pero prolijo
+    });
 
     return res.json({
       accessToken,
-      refreshToken,
       user: { id: user.id, email: user.email },
     });
   } catch (err) {
@@ -65,13 +69,11 @@ async function login(req, res, next) {
 
 async function refreshToken(req, res, next) {
   try {
-    const { refreshToken } = req.body;
-    if (!refreshToken)
-      throw new validationError("Refresh token is required");
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) throw new validationError("Refresh token is required");
 
-    const { valid, decoded, error } = verifyToken(refreshToken);
-    if (!valid)
-      throw new validationError("Invalid refresh token");
+    const { valid, decoded } = verifyToken(refreshToken);
+    if (!valid) throw new validationError("Invalid refresh token");
 
     const user = await User.findByPk(decoded.id);
     if (!user || user.refreshToken !== refreshToken)
@@ -84,10 +86,14 @@ async function refreshToken(req, res, next) {
     user.refreshToken = newRefreshToken;
     await user.save();
 
-    return res.json({
-      accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      path: "/auth",
     });
+
+    return res.json({ accessToken: newAccessToken });
   } catch (err) {
     return next(err);
   }
@@ -112,45 +118,13 @@ async function checkAuthStatus(req, res, next) {
   try {
     const authHeader = req.headers.authorization || "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
-    if (!token) throw new validationError("No token provided");
 
-    const { valid, decoded, error } = verifyToken(token);
-    if (valid) {
-      return res.json({ authenticated: true, user: decoded });
-    }
+    if (!token) return res.status(401).json({ authenticated: false });
 
-    if (error && error.name === "TokenExpiredError") {
-      const { refreshToken } = req.body;
-      if (!refreshToken)
-        return res
-          .status(401)
-          .json({ authenticated: false, message: "Expired token" });
+    const { valid, decoded } = verifyToken(token);
+    if (!valid) return res.status(401).json({ authenticated: false });
 
-      const verifyRefresh = verifyToken(refreshToken);
-      if (!verifyRefresh.valid)
-        return res
-          .status(401)
-          .json({ authenticated: false, message: "Invalid refresh token" });
-
-      const user = await User.findByPk(verifyRefresh.decoded.id);
-      if (!user || user.refreshToken !== refreshToken)
-        return res.status(401).json({ authenticated: false });
-
-      const payload = { id: user.id, email: user.email };
-      const newAccessToken = generateAccessToken(payload);
-      const newRefreshToken = generateRefreshToken(payload);
-      user.refreshToken = newRefreshToken;
-      await user.save();
-
-      return res.json({
-        authenticated: true,
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken,
-        user: payload,
-      });
-    }
-
-    return res.status(401).json({ authenticated: false });
+    return res.json({ authenticated: true, user: decoded });
   } catch (err) {
     return next(err);
   }
@@ -161,5 +135,5 @@ module.exports = {
   refreshToken,
   logout,
   checkAuthStatus,
-  singUp
+  singUp,
 };

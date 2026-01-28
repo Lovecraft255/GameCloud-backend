@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
 
 const userRoute = require("./src/routes/user");
 const gameRoute = require("./src/routes/game");
@@ -16,6 +17,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.options("*", cors(corsOptions));
 
 app.use(express.json());
