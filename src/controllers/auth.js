@@ -48,15 +48,16 @@ async function login(req, res, next) {
     const payload = { id: user.id, email: user.email };
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // solo secure en producción (Render ya usa HTTPS)
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // none para cross-site en prod, lax para dev
+      path: "/auth",
+    };
 
     user.refreshToken = refreshToken;
     await user.save();
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: true, // Render = HTTPS
-      sameSite: "none", // cross-origin
-      path: "/auth", // opcional pero prolijo
-    });
+    res.cookie("refreshToken", refreshToken, cookieOptions);
 
     return res.json({
       accessToken,
@@ -85,14 +86,7 @@ async function refreshToken(req, res, next) {
 
     user.refreshToken = newRefreshToken;
     await user.save();
-
-    res.cookie("refreshToken", newRefreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path: "/auth",
-    });
-
+    res.cookie("refreshToken", newRefreshToken, cookieOptions);
     return res.json({ accessToken: newAccessToken });
   } catch (err) {
     return next(err);
