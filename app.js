@@ -10,24 +10,22 @@ const app = express();
 
 const corsOptions = {
   origin: ["http://localhost:5173", "https://games-cloud-front.vercel.app"],
+  credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  exposedHeaders: ["Authorization"],
-  credentials: true,
 };
 
-app.use(cors(corsOptions));
-app.use(cookieParser());
-app.options("*", cors(corsOptions));
-
+app.use(cors(corsOptions)); // 👈 PRIMERO
+app.options("*", cors(corsOptions)); // 👈 CLAVE
+app.use(cookieParser()); // 👈 ANTES de routes
 app.use(express.json());
 
 app.get("/", (req, res) => {
   res.json({ message: "Running" });
 });
 
+app.use("/auth", authRoute); // 👈 DESPUÉS
 app.use("/user", userRoute);
 app.use("/game", gameRoute);
-app.use("/auth", authRoute);
 
 module.exports = app;
