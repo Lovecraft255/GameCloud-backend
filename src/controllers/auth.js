@@ -8,6 +8,13 @@ const {
 const { validationError } = require("../Errors/validationErrors");
 const { appError } = require("../Errors/appError");
 
+const cookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production", // secure sólo en producción (Render usa HTTPS)
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // none en prod, lax en dev
+  path: "/", // importante: que sea '/' para que la cookie se incluya en todas las rutas proxeadas
+};
+
 async function singUp(req, res) {
   const { name, email, password } = req.body;
 
@@ -48,16 +55,12 @@ async function login(req, res, next) {
     const payload = { id: user.id, email: user.email };
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // solo secure en producción (Render ya usa HTTPS)
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", // none para cross-site en prod, lax para dev
-      path: "/auth",
-    };
+    // Dentro de src/controllers/auth.js, modifica las opciones de cookie por ejemplo así:
 
-    user.refreshToken = refreshToken;
-    await user.save();
+    // en login() usa:
     res.cookie("refreshToken", refreshToken, cookieOptions);
+
+    // en refreshToken() usa:
 
     return res.json({
       accessToken,
@@ -83,6 +86,8 @@ async function refreshToken(req, res, next) {
     const payload = { id: user.id, email: user.email };
     const newAccessToken = generateAccessToken(payload);
     const newRefreshToken = generateRefreshToken(payload);
+
+    res.cookie("refreshToken", newRefreshToken, cookieOptions);
 
     user.refreshToken = newRefreshToken;
     await user.save();
